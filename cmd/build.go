@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/nikkehtine/maison/builder"
+	"github.com/nikkehtine/maison/options"
 
 	"github.com/spf13/cobra"
 )
@@ -20,16 +21,30 @@ var buildCmd = &cobra.Command{
 By default outputs to ./public, unless specified otherwise
 with the -o flag or in the config.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Maison version " + VERSION)
+		fmt.Printf("Maison version %s\n\n", VERSION)
 
 		if len(args) == 0 {
 			log.Fatal("No path specified")
 		}
 
 		for _, path := range args {
-			builder := new(builder.Builder)
-			builder.Init(path)
-			builder.Build()
+			config := options.DefaultConfig
+			config.Input = path
+
+			builder := &builder.Builder{
+				Config: config,
+			}
+
+			var err error
+			err = builder.Init(config)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = builder.Build()
+			if err != nil {
+				log.Fatal(err)
+			}
+
 		}
 	},
 }

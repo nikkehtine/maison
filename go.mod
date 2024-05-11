@@ -2,7 +2,10 @@ module github.com/nikkehtine/maison
 
 go 1.22.2
 
-require github.com/spf13/cobra v1.8.0
+require (
+	github.com/spf13/cobra v1.8.0
+	github.com/yuin/goldmark v1.7.1
+)
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
