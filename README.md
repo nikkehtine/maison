@@ -1,6 +1,4 @@
-# Maison
-
-> [mɛzɔ̃]
+# Maison <i style="color:grey;">[mɛzɔ̃]</i>
 
 Static site generator and server for Markdown
 
