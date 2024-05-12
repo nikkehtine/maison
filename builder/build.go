@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/nikkehtine/maison/options"
-	"github.com/nikkehtine/maison/parser"
 )
 
 type Builder struct {
@@ -70,7 +69,7 @@ func (b *Builder) Build() error {
 			log.Fatal(err)
 		}
 
-		output, err := parser.Parse(input)
+		output, err := b.Parse(input)
 		if err != nil {
 			log.Fatal(err)
 		}

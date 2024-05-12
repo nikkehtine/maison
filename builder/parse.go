@@ -1,4 +1,4 @@
-package parser
+package builder
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ var md = goldmark.New(
 	),
 )
 
-func Parse(input []byte) ([]byte, error) {
+func (b *Builder) Parse(input []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	err := md.Convert(input, &buf)
 	if err != nil {
