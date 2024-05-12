@@ -68,7 +68,7 @@ func (b *Builder) Init(conf options.Config) error {
 		b.Files = filter(listDir, func(e os.DirEntry) bool {
 			return (!isHidden(e) &&
 				!e.IsDir() &&
-				filepath.Ext(e.Name()) == ".md")
+				filepath.Ext(e.Name()) != ".md")
 		})
 		return nil
 	} else {
@@ -95,15 +95,12 @@ func (b *Builder) Build() error {
 
 		output, err := b.Parse(input)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			continue
 		}
 
-		outFileName := filepath.Join(
-			b.Output,
-			strings.TrimSuffix(entry.Name(),
-				filepath.Ext(entry.Name()),
-			)+".html",
-		)
+		outFileName := filepath.Join(b.Output,
+			strings.TrimSuffix(inFileName, filepath.Ext(entry.Name()))+".html")
 
 		err = os.WriteFile(outFileName, output, 0644)
 		if err != nil {
@@ -111,9 +108,24 @@ func (b *Builder) Build() error {
 		}
 	}
 
+	// Copy files
+	for _, entry := range b.Files {
+		inFileName := filepath.Join(b.Input, entry.Name())
+		log.Printf("COPY  %s", entry.Name())
+
+		in, err := os.ReadFile(inFileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err = os.WriteFile(filepath.Join(b.Output, entry.Name()), in, 0644); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	// Build directories
 	for _, entry := range b.Directories {
-		log.Printf("MOVE DIR %s",
+		log.Printf("DIR   %s",
 			filepath.Join(b.Input, entry.Name()))
 
 		dirBuilder := Builder{
