@@ -5,6 +5,7 @@ go 1.22.2
 require (
 	github.com/spf13/cobra v1.8.0
 	github.com/yuin/goldmark v1.7.1
+	github.com/yuin/goldmark-emoji v1.0.2
 )
 
 require (

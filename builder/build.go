@@ -48,7 +48,16 @@ func (b *Builder) Init(conf options.Config) error {
 func (b *Builder) Build() error {
 	for _, entry := range b.Contents {
 		if entry.IsDir() {
-			continue // TODO: build recursively
+			dirBuilder := Builder{
+				Input:  filepath.Join(b.Input, entry.Name()),
+				Output: filepath.Join(b.Output, entry.Name()),
+				Config: b.Config,
+			}
+			dirBuilder.Init(b.Config)
+			err := dirBuilder.Build()
+			if err != nil {
+				return err
+			}
 		}
 		if filepath.Ext(entry.Name()) != ".md" {
 			continue
