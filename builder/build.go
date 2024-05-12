@@ -11,12 +11,26 @@ import (
 )
 
 type Builder struct {
-	Input    string
-	Output   string
-	Config   options.Config
-	Contents []os.DirEntry
+	Input       string
+	Output      string
+	Config      options.Config
+	Directories []os.DirEntry
+	Documents   []os.DirEntry
+	Files       []os.DirEntry
 }
 
+// Helper function
+func filter[T any](slice []T, test func(T) bool) []T {
+	var ret = make([]T, 0)
+	for _, v := range slice {
+		if test(v) {
+			ret = append(ret, v)
+		}
+	}
+	return ret
+}
+
+// Initialize builder object
 func (b *Builder) Init(conf options.Config) error {
 	if b.Input == "" {
 		b.Input = conf.Input
@@ -35,36 +49,46 @@ func (b *Builder) Init(conf options.Config) error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		b.Contents = listDir
+
+		isHidden := func(e os.DirEntry) bool {
+			return strings.HasPrefix(e.Name(), ".") ||
+				strings.HasPrefix(e.Name(), "_")
+		}
+
+		b.Documents = filter(listDir, func(e os.DirEntry) bool {
+			return (!isHidden(e) &&
+				!e.IsDir() &&
+				filepath.Ext(e.Name()) == ".md")
+		})
+
+		b.Directories = filter(listDir, func(e os.DirEntry) bool {
+			return (!isHidden(e) && e.IsDir())
+		})
+
+		b.Files = filter(listDir, func(e os.DirEntry) bool {
+			return (!isHidden(e) &&
+				!e.IsDir() &&
+				filepath.Ext(e.Name()) == ".md")
+		})
 		return nil
 	} else {
 		b.Input = filepath.Dir(b.Input)
-		b.Contents = append(b.Contents, fs.FileInfoToDirEntry(input))
+		b.Files = append(b.Files, fs.FileInfoToDirEntry(input))
 		return nil
 	}
 }
 
 func (b *Builder) Build() error {
-	for _, entry := range b.Contents {
-		if entry.IsDir() {
-			dirBuilder := Builder{
-				Input:  filepath.Join(b.Input, entry.Name()),
-				Output: filepath.Join(b.Output, entry.Name()),
-				Config: b.Config,
-			}
-			dirBuilder.Init(b.Config)
-			err := dirBuilder.Build()
-			if err != nil {
-				return err
-			}
-		}
-		if filepath.Ext(entry.Name()) != ".md" {
-			continue
-		}
+	if err := os.MkdirAll(b.Output, 0755); err != nil {
+		return err
+	}
 
-		log.Printf("building %s", entry.Name())
+	// Build documents
+	for _, entry := range b.Documents {
+		inFileName := filepath.Join(b.Input, entry.Name())
+		log.Printf("BUILD %s", entry.Name())
 
-		input, err := os.ReadFile(filepath.Join(b.Input, entry.Name()))
+		input, err := os.ReadFile(inFileName)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -74,18 +98,37 @@ func (b *Builder) Build() error {
 			log.Fatal(err)
 		}
 
-		if _, err = os.Stat(b.Output); os.IsNotExist(err) {
-			err := os.MkdirAll(b.Output, 0755)
-			if err != nil {
-				return err
-			}
-		}
+		outFileName := filepath.Join(
+			b.Output,
+			strings.TrimSuffix(entry.Name(),
+				filepath.Ext(entry.Name()),
+			)+".html",
+		)
 
-		outFile := filepath.Join(b.Output, strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))+".html")
-
-		err = os.WriteFile(outFile, output, 0644)
+		err = os.WriteFile(outFileName, output, 0644)
 		if err != nil {
 			log.Fatal(err)
+		}
+	}
+
+	// Build directories
+	for _, entry := range b.Directories {
+		log.Printf("MOVE DIR %s",
+			filepath.Join(b.Input, entry.Name()))
+
+		dirBuilder := Builder{
+			Input:  filepath.Join(b.Input, entry.Name()),
+			Output: filepath.Join(b.Output, entry.Name()),
+			Config: b.Config,
+		}
+		dirBuilder.Init(b.Config)
+		err := dirBuilder.Build()
+		if err != nil {
+			return err
+		}
+
+		if filepath.Ext(entry.Name()) != ".md" {
+			continue
 		}
 	}
 	return nil
