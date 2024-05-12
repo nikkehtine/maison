@@ -83,6 +83,8 @@ func (b *Builder) Build() error {
 		return err
 	}
 
+	log.Printf("building %s", b.Input)
+
 	// Build documents
 	for _, entry := range b.Documents {
 		inFileName := filepath.Join(b.Input, entry.Name())
@@ -100,7 +102,7 @@ func (b *Builder) Build() error {
 		}
 
 		outFileName := filepath.Join(b.Output,
-			strings.TrimSuffix(inFileName, filepath.Ext(entry.Name()))+".html")
+			strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))+".html")
 
 		err = os.WriteFile(outFileName, output, 0644)
 		if err != nil {
@@ -125,9 +127,6 @@ func (b *Builder) Build() error {
 
 	// Build directories
 	for _, entry := range b.Directories {
-		log.Printf("DIR   %s",
-			filepath.Join(b.Input, entry.Name()))
-
 		dirBuilder := Builder{
 			Input:  filepath.Join(b.Input, entry.Name()),
 			Output: filepath.Join(b.Output, entry.Name()),
