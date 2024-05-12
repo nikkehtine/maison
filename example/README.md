@@ -2,4 +2,8 @@
 
 These are examples meant to showcase Maison.
 
-Simply navigate here and run `maison build` or run `maison build example`.
+Simply run `maison build example` from project root.
+
+You can also navigate here and run `maison build`.
+
+By default it outputs to the `public` directory.
