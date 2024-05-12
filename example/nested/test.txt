@@ -1,0 +1,4 @@
+I'm not a md file
+I should be copied to the public dir anyway
+
+Else I will be very sad :(
