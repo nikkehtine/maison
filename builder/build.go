@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
+
 	"github.com/nikkehtine/maison/options"
 )
 
@@ -83,21 +85,27 @@ func (b *Builder) Build() error {
 		return err
 	}
 
-	log.Printf("building %s", b.Input)
+	blue := color.New(color.FgBlue).SprintFunc()
+	log.Printf("building %s", blue(b.Input))
+
+	yellowBg := color.New(color.BgYellow).SprintFunc()
+	cyanBg := color.New(color.BgCyan).SprintFunc()
+	redBg := color.New(color.BgRed).SprintFunc()
 
 	// Build documents
 	for _, entry := range b.Documents {
 		inFileName := filepath.Join(b.Input, entry.Name())
-		log.Printf("BUILD %s", entry.Name())
+		log.Printf("%s %s", yellowBg(" BUILD "), entry.Name())
 
 		input, err := os.ReadFile(inFileName)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("%s %s", redBg(" ERROR "), err)
+			continue
 		}
 
 		output, err := b.Parse(input)
 		if err != nil {
-			log.Println(err)
+			log.Printf("%s %s", redBg(" ERROR "), err)
 			continue
 		}
 
@@ -113,7 +121,7 @@ func (b *Builder) Build() error {
 	// Copy files
 	for _, entry := range b.Files {
 		inFileName := filepath.Join(b.Input, entry.Name())
-		log.Printf("COPY  %s", entry.Name())
+		log.Printf("%s %s", cyanBg(" COPY  "), entry.Name())
 
 		in, err := os.ReadFile(inFileName)
 		if err != nil {
