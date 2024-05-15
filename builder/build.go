@@ -94,9 +94,8 @@ func (b *Builder) Build() error {
 	if err := os.MkdirAll(b.Output, 0755); err != nil {
 		return err
 	}
-
 	blue := color.New(color.FgBlue).SprintFunc()
-	log.Printf("building %s", blue(b.Input))
+	log.Printf("created %s, building", blue(b.Input))
 
 	yellowBg := color.New(color.BgYellow).SprintFunc()
 	cyanBg := color.New(color.BgCyan).SprintFunc()
