@@ -19,32 +19,32 @@ var buildCmd = &cobra.Command{
 	Short: "Build the site",
 	Long: `Build the whole site.
 By default outputs to ./public, unless specified otherwise
-with the -o flag or in the config.`,
+in the config. You can also specify the directory/file to build`,
+
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Maison version %s\n\n", VERSION)
 
-		if len(args) == 0 {
-			log.Fatal("No path specified")
+		if len(args) > 1 {
+			fmt.Println("Too many arguments")
 		}
 
-		for _, path := range args {
-			config := options.DefaultConfig
-			config.Input = path
+		config := options.DefaultConfig
+		if len(args) == 1 {
+			config.Input = args[0]
+		}
 
-			builder := &builder.Builder{
-				Config: config,
-			}
+		builder := &builder.Builder{
+			Config: config,
+		}
 
-			var err error
-			err = builder.Init(config)
-			if err != nil {
-				log.Fatal(err)
-			}
-			err = builder.Build()
-			if err != nil {
-				log.Fatal(err)
-			}
-
+		var err error
+		err = builder.Init(config)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = builder.Build()
+		if err != nil {
+			log.Fatal(err)
 		}
 	},
 }

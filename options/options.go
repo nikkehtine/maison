@@ -6,6 +6,6 @@ type Config struct {
 }
 
 var DefaultConfig = Config{
-	Input:  "./",
+	Input:  ".",
 	Output: "./public",
 }

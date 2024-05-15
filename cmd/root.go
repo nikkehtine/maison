@@ -23,19 +23,17 @@ as well as a simple web server for hosting your generated content.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if rootCmd.Flags().Lookup("version").Value.String() == "true" {
-		fmt.Println(VERSION)
-		os.Exit(0)
-	}
-
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+	if rootCmd.Flags().Lookup("version").Changed {
+		fmt.Println(VERSION)
+		os.Exit(0)
 	}
 }
 
 func init() {
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.maison.yaml)")
-	rootCmd.Flags().BoolP("version", "v", false, "print version")
+	rootCmd.Flags().BoolP("version", "v", false, "print version") // this doesnt work as it should as of now
 }
