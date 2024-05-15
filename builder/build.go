@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
+
 	"github.com/nikkehtine/maison/options"
 )
 
@@ -30,6 +32,20 @@ func filter[T any](slice []T, test func(T) bool) []T {
 	return ret
 }
 
+// Check if a file or directory is hidden
+func isHidden(e os.DirEntry) bool {
+	return strings.HasPrefix(e.Name(), ".") ||
+		strings.HasPrefix(e.Name(), "_")
+}
+
+// Log error and move on to the next entry. I don't know if you can continue a loop from within here so just PLEASE use 'continue' right after it in the error check!!!
+func logError(err error) {
+	redBg := color.New(color.BgRed).SprintFunc()
+	if err != nil {
+		log.Printf("%s %s", redBg(" ERROR "), err)
+	}
+}
+
 // Initialize builder object
 func (b *Builder) Init(conf options.Config) error {
 	if b.Input == "" {
@@ -48,11 +64,6 @@ func (b *Builder) Init(conf options.Config) error {
 		listDir, err := os.ReadDir(b.Input)
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		isHidden := func(e os.DirEntry) bool {
-			return strings.HasPrefix(e.Name(), ".") ||
-				strings.HasPrefix(e.Name(), "_")
 		}
 
 		b.Documents = filter(listDir, func(e os.DirEntry) bool {
@@ -78,26 +89,31 @@ func (b *Builder) Init(conf options.Config) error {
 	}
 }
 
+// Build the site, copying all files and building documents
 func (b *Builder) Build() error {
 	if err := os.MkdirAll(b.Output, 0755); err != nil {
 		return err
 	}
+	blue := color.New(color.FgBlue).SprintFunc()
+	log.Printf("created %s, building", blue(b.Input))
 
-	log.Printf("building %s", b.Input)
+	yellowBg := color.New(color.BgYellow).SprintFunc()
+	cyanBg := color.New(color.BgCyan).SprintFunc()
 
 	// Build documents
 	for _, entry := range b.Documents {
 		inFileName := filepath.Join(b.Input, entry.Name())
-		log.Printf("BUILD %s", entry.Name())
+		log.Printf("%s %s", yellowBg(" BUILD "), entry.Name())
 
 		input, err := os.ReadFile(inFileName)
 		if err != nil {
-			log.Fatal(err)
+			logError(err)
+			continue
 		}
 
 		output, err := b.Parse(input)
 		if err != nil {
-			log.Println(err)
+			logError(err)
 			continue
 		}
 
@@ -106,22 +122,25 @@ func (b *Builder) Build() error {
 
 		err = os.WriteFile(outFileName, output, 0644)
 		if err != nil {
-			log.Fatal(err)
+			logError(err)
+			continue
 		}
 	}
 
 	// Copy files
 	for _, entry := range b.Files {
 		inFileName := filepath.Join(b.Input, entry.Name())
-		log.Printf("COPY  %s", entry.Name())
+		log.Printf("%s %s", cyanBg(" COPY  "), entry.Name())
 
 		in, err := os.ReadFile(inFileName)
 		if err != nil {
-			log.Fatal(err)
+			logError(err)
+			continue
 		}
 
 		if err = os.WriteFile(filepath.Join(b.Output, entry.Name()), in, 0644); err != nil {
-			log.Fatal(err)
+			logError(err)
+			continue
 		}
 	}
 
@@ -136,10 +155,6 @@ func (b *Builder) Build() error {
 		err := dirBuilder.Build()
 		if err != nil {
 			return err
-		}
-
-		if filepath.Ext(entry.Name()) != ".md" {
-			continue
 		}
 	}
 	return nil
