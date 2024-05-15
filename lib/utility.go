@@ -3,6 +3,7 @@ package lib
 import (
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/fatih/color"
@@ -19,10 +20,11 @@ func Filter[T any](slice []T, test func(T) bool) []T {
 	return ret
 }
 
-// Check if a file or directory is hidden
+// Check if a file or directory is hidden. Also ignore OS files that definitely shouldn't be served publicly
 func IsHidden(e os.DirEntry) bool {
 	return strings.HasPrefix(e.Name(), ".") ||
-		strings.HasPrefix(e.Name(), "_")
+		strings.HasPrefix(e.Name(), "_") ||
+		regexp.MustCompile(`(?i)desktop\.ini`).MatchString(e.Name())
 }
 
 // Log error and move on to the next entry. I don't know if you can continue a loop from within here so just PLEASE use 'continue' right after it in the error check!!!
