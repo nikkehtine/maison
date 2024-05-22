@@ -93,14 +93,25 @@ func (b *Builder) Build() error {
 			continue
 		}
 
-		output, err := b.Parse(input)
+		renderedMd, err := b.Parse(input)
 		if err != nil {
 			lib.LogError(err)
 			continue
 		}
 
+		renderer := &PageRenderer{
+			Title: "Maison",
+			Body:  string(renderedMd),
+		}
+
 		outFileName := filepath.Join(b.Output,
 			strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))+".html")
+
+		output, err := renderer.Output()
+		if err != nil {
+			lib.LogError(err)
+			continue
+		}
 
 		err = os.WriteFile(outFileName, output, 0644)
 		if err != nil {
