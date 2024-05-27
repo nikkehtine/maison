@@ -28,6 +28,4 @@ func Execute() {
 	}
 }
 
-func init() {
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.maison.yaml)")
-}
+func init() {}
