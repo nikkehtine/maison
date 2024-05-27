@@ -15,7 +15,7 @@ var rootCmd = &cobra.Command{
 	Use:   "maison",
 	Short: "Static site generator for Markdown",
 	Long: `Maison is a static site generator for Markdown,
-as well as a simple web server for hosting your generated content.`,
+as well as a simple server for your generated content.`,
 	Version: "0.1.0",
 }
 
@@ -28,4 +28,6 @@ func Execute() {
 	}
 }
 
-func init() {}
+func init() {
+	rootCmd.SetVersionTemplate(fmt.Sprintf("v%s\n", rootCmd.Version))
+}
