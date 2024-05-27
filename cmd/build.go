@@ -22,8 +22,6 @@ By default outputs to ./public, unless specified otherwise
 in the config. You can also specify the directory/file to build`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Maison version %s\n\n", VERSION)
-
 		if len(args) > 1 {
 			fmt.Println("Too many arguments")
 		}
