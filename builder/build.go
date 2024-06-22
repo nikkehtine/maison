@@ -12,6 +12,7 @@ import (
 
 	"github.com/fatih/color"
 
+	"github.com/nikkehtine/maison/lib"
 	"github.com/nikkehtine/maison/options"
 )
 
@@ -22,31 +23,6 @@ type Builder struct {
 	Directories []os.DirEntry
 	Documents   []os.DirEntry
 	Files       []os.DirEntry
-}
-
-// Helper function
-func filter[T any](slice []T, test func(T) bool) []T {
-	var ret = make([]T, 0)
-	for _, v := range slice {
-		if test(v) {
-			ret = append(ret, v)
-		}
-	}
-	return ret
-}
-
-// Check if a file or directory is hidden
-func isHidden(e os.DirEntry) bool {
-	return strings.HasPrefix(e.Name(), ".") ||
-		strings.HasPrefix(e.Name(), "_")
-}
-
-// Log error and move on to the next entry. I don't know if you can continue a loop from within here so just PLEASE use 'continue' right after it in the error check!!!
-func logError(err error) {
-	redBg := color.New(color.BgRed).SprintFunc()
-	if err != nil {
-		log.Printf("%s %s", redBg(" ERROR "), err)
-	}
 }
 
 // Initialize builder object
@@ -69,18 +45,18 @@ func (b *Builder) Init(conf options.Config) error {
 			log.Fatal(err)
 		}
 
-		b.Documents = filter(listDir, func(e os.DirEntry) bool {
-			return (!isHidden(e) &&
+		b.Documents = lib.Filter(listDir, func(e os.DirEntry) bool {
+			return (!lib.IsHidden(e) &&
 				!e.IsDir() &&
 				filepath.Ext(e.Name()) == ".md")
 		})
 
-		b.Directories = filter(listDir, func(e os.DirEntry) bool {
-			return (!isHidden(e) && e.IsDir())
+		b.Directories = lib.Filter(listDir, func(e os.DirEntry) bool {
+			return (!lib.IsHidden(e) && e.IsDir())
 		})
 
-		b.Files = filter(listDir, func(e os.DirEntry) bool {
-			return (!isHidden(e) &&
+		b.Files = lib.Filter(listDir, func(e os.DirEntry) bool {
+			return (!lib.IsHidden(e) &&
 				!e.IsDir() &&
 				filepath.Ext(e.Name()) != ".md")
 		})
@@ -97,8 +73,11 @@ func (b *Builder) Build() error {
 	if err := os.MkdirAll(b.Output, 0755); err != nil {
 		return err
 	}
-	blue := color.New(color.FgBlue).SprintFunc()
-	log.Printf("created %s, building", blue(b.Input))
+
+	if b.Input != "." && b.Input != "./" {
+		blue := color.New(color.FgBlue).SprintFunc()
+		log.Printf("building %s", blue(b.Input))
+	}
 
 	yellowBg := color.New(color.BgYellow).SprintFunc()
 	cyanBg := color.New(color.BgCyan).SprintFunc()
@@ -110,22 +89,33 @@ func (b *Builder) Build() error {
 
 		input, err := os.ReadFile(inFileName)
 		if err != nil {
-			logError(err)
+			lib.LogError(err)
 			continue
 		}
 
-		output, err := b.Parse(input)
+		renderedMd, err := b.Parse(input)
 		if err != nil {
-			logError(err)
+			lib.LogError(err)
 			continue
+		}
+
+		renderer := &PageRenderer{
+			Title: "Maison",
+			Body:  string(renderedMd),
 		}
 
 		outFileName := filepath.Join(b.Output,
 			strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))+".html")
 
+		output, err := renderer.Output()
+		if err != nil {
+			lib.LogError(err)
+			continue
+		}
+
 		err = os.WriteFile(outFileName, output, 0644)
 		if err != nil {
-			logError(err)
+			lib.LogError(err)
 			continue
 		}
 	}
@@ -137,12 +127,12 @@ func (b *Builder) Build() error {
 
 		in, err := os.ReadFile(inFileName)
 		if err != nil {
-			logError(err)
+			lib.LogError(err)
 			continue
 		}
 
 		if err = os.WriteFile(filepath.Join(b.Output, entry.Name()), in, 0644); err != nil {
-			logError(err)
+			lib.LogError(err)
 			continue
 		}
 	}
