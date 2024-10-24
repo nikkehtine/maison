@@ -4,6 +4,7 @@ Copyright © 2024 nikkehtine <nikkehtine@int.pl>
 package builder
 
 import (
+	"html/template"
 	"io/fs"
 	"log"
 	"os"
@@ -17,12 +18,14 @@ import (
 )
 
 type Builder struct {
-	Input       string
-	Output      string
-	Config      options.Config
-	Directories []os.DirEntry
-	Documents   []os.DirEntry
-	Files       []os.DirEntry
+	Input        string
+	Output       string
+	TemplatePath string
+	Config       options.Config
+	Template     *template.Template
+	Directories  []os.DirEntry
+	Documents    []os.DirEntry
+	Files        []os.DirEntry
 }
 
 // Initialize builder object
@@ -33,7 +36,24 @@ func (b *Builder) Init(conf options.Config) error {
 	if b.Output == "" {
 		b.Output = conf.Output
 	}
+	if b.TemplatePath == "" {
+		b.TemplatePath = conf.TemplatePath
+	}
 	b.Config = conf
+
+	templateBuffer, err := os.ReadFile(b.TemplatePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			redBg := color.New(color.BgRed).SprintFunc()
+			log.Printf("%s %s", redBg(" ERROR "), "template doesn't exist")
+		}
+		return err
+	}
+
+	b.Template, err = template.New("md2html").Parse(string(templateBuffer))
+	if err != nil {
+		return err
+	}
 
 	input, err := os.Stat(b.Input)
 	if err != nil {
@@ -114,7 +134,7 @@ func (b *Builder) Build() error {
 		outFileName := filepath.Join(b.Output,
 			strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))+".html")
 
-		output, err := renderer.Output()
+		output, err := renderer.Output(b.Template)
 		if err != nil {
 			lib.LogError(err)
 			continue

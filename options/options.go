@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Input      string
-	Output     string
-	IgnoreList []string
+	Input        string
+	Output       string
+	TemplatePath string
+	IgnoreList   []string
 }
 
 func (c *Config) IsIgnored(e os.DirEntry) bool {
@@ -20,7 +21,8 @@ func (c *Config) IsIgnored(e os.DirEntry) bool {
 }
 
 var DefaultConfig = Config{
-	Input:      ".",
-	Output:     "./public",
-	IgnoreList: []string{"public", "layout", "maison.config.toml", "maison.config.json"},
+	Input:        ".",
+	Output:       "./public",
+	TemplatePath: "layout/main.html",
+	IgnoreList:   []string{"public", "layout", "maison.config.toml", "maison.config.json"},
 }
