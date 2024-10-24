@@ -52,7 +52,8 @@ func (b *Builder) Init(conf options.Config) error {
 		})
 
 		b.Directories = lib.Filter(listDir, func(e os.DirEntry) bool {
-			return (!lib.IsHidden(e) && e.IsDir())
+			return (!lib.IsHidden(e) &&
+				e.IsDir())
 		})
 
 		b.Files = lib.Filter(listDir, func(e os.DirEntry) bool {
@@ -79,13 +80,19 @@ func (b *Builder) Build() error {
 		log.Printf("building %s", blue(b.Input))
 	}
 
-	yellowBg := color.New(color.BgYellow).SprintFunc()
-	cyanBg := color.New(color.BgCyan).SprintFunc()
+	colorBuild := color.New(color.BgYellow).SprintFunc()
+	colorCopy := color.New(color.BgCyan).SprintFunc()
+	colorSkip := color.New(color.BgGreen).SprintFunc()
 
 	// Build documents
 	for _, entry := range b.Documents {
+		if b.Config.IsIgnored(entry) {
+			log.Printf("%s %s", colorSkip(" SKIP  "), entry.Name())
+			continue
+		}
+		log.Printf("%s %s", colorBuild(" BUILD "), entry.Name())
+
 		inFileName := filepath.Join(b.Input, entry.Name())
-		log.Printf("%s %s", yellowBg(" BUILD "), entry.Name())
 
 		input, err := os.ReadFile(inFileName)
 		if err != nil {
@@ -122,8 +129,14 @@ func (b *Builder) Build() error {
 
 	// Copy files
 	for _, entry := range b.Files {
+		if b.Config.IsIgnored(entry) {
+			log.Printf("%s %s", colorSkip(" SKIP  "), entry.Name())
+			continue
+		}
+
 		inFileName := filepath.Join(b.Input, entry.Name())
-		log.Printf("%s %s", cyanBg(" COPY  "), entry.Name())
+
+		log.Printf("%s %s", colorCopy(" COPY  "), entry.Name())
 
 		in, err := os.ReadFile(inFileName)
 		if err != nil {
@@ -139,6 +152,10 @@ func (b *Builder) Build() error {
 
 	// Build directories
 	for _, entry := range b.Directories {
+		if b.Config.IsIgnored(entry) {
+			log.Printf("%s %s", colorSkip(" SKIP  "), entry.Name())
+			continue
+		}
 		dirBuilder := Builder{
 			Input:  filepath.Join(b.Input, entry.Name()),
 			Output: filepath.Join(b.Output, entry.Name()),

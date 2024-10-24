@@ -27,6 +27,15 @@ func IsHidden(e os.DirEntry) bool {
 		regexp.MustCompile(`(?i)desktop\.ini`).MatchString(e.Name())
 }
 
+func Includes(entry string, ignoreList []string) bool {
+	for _, item := range ignoreList {
+		if item == entry {
+			return true
+		}
+	}
+	return false
+}
+
 // Log error and move on to the next entry. I don't know if you can continue a loop from within here so just PLEASE use 'continue' right after it in the error check!!!
 func LogError(err error) {
 	redBg := color.New(color.BgRed).SprintFunc()

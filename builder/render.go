@@ -5,6 +5,7 @@ package builder
 
 import (
 	"bytes"
+	"os"
 	"text/template"
 )
 
@@ -16,7 +17,15 @@ type PageRenderer struct {
 
 // Render outputs the rendered Markdown into a HTML template
 func (r *PageRenderer) Output() ([]byte, error) {
-	tmpl, err := template.ParseFiles("layout/main.html")
+	templatePath := "layout/main.html"
+
+	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		return nil, err
+	} else if err != nil {
+		return nil, err
+	}
+
+	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return nil, err
 	}
